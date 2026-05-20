@@ -18,6 +18,8 @@ services:
       - key: COOKIE_SECURE
         value: "true"
     healthCheckPath: /health
+    # Run one-time seed on first successful deploy
+    initialDeployHook: "node dist/scripts/seed.js"
 
   - name: smart-dashboard-frontend
     type: web
