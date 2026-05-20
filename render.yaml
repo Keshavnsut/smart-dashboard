@@ -1,0 +1,42 @@
+services:
+  - name: smart-dashboard-backend
+    type: web
+    repo: https://github.com/Keshavnsut/smart-dashboard
+    branch: main
+    runtime: docker
+    dockerfilePath: apps/backend/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "4000"
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        sync: false
+      - key: COOKIE_SECURE
+        value: "true"
+    healthCheckPath: /health
+
+  - name: smart-dashboard-frontend
+    type: web
+    repo: https://github.com/Keshavnsut/smart-dashboard
+    branch: main
+    runtime: docker
+    dockerfilePath: apps/frontend/Dockerfile
+    dockerContext: .
+    envVars:
+      - key: PORT
+        value: "80"
+      - key: API_HOSTPORT
+        value: "smart-dashboard-backend:4000"
+    staticPublishPath: ./apps/frontend/dist
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: /api/
+
+envVarGroups: []
+
+projects: []
