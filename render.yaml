@@ -33,11 +33,7 @@ services:
         value: "80"
       - key: API_HOSTPORT
         value: "smart-dashboard-backend:4000"
-    staticPublishPath: ./apps/frontend/dist
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: /api/
+    # Using Docker runtime; static publish path and routes are for static sites only
 
 envVarGroups: []
 
