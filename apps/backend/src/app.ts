@@ -33,6 +33,14 @@ export function createApp() {
     }),
   )
 
+  app.get('/', (_req, res) => {
+    res.status(200).json({
+      success: true,
+      message: 'Smart Dashboard API is running',
+      endpoints: ['/health', '/api/auth', '/api/leads'],
+    })
+  })
+
   app.get('/health', (_req, res) => res.status(200).json({ ok: true }))
   app.use('/api', apiRouter)
 
