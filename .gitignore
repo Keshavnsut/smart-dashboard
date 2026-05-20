@@ -1,0 +1,33 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build output
+dist/
+**/dist/
+.vite/
+**/.vite/
+*.tsbuildinfo
+
+# Environment files
+.env*
+apps/**/.env*
+!.env.example
+!apps/**/.env.example
+
+# Logs
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+*.log
+logs/
+
+# Local curl cookie jars (can contain JWTs)
+cookies.txt
+**/cookies.txt
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/

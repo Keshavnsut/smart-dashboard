@@ -1,0 +1,33 @@
+services:
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    volumes:
+      - mongo_data:/data/db
+
+  backend:
+    image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_REPO:-keshavnsut/smart-dashboard}:backend-latest
+    restart: unless-stopped
+    depends_on:
+      - mongo
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/smart_leads_dashboard}
+      JWT_SECRET: ${JWT_SECRET}
+      JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
+    # Optional: expose backend directly (not required when frontend proxies /api)
+    # ports:
+    #   - "4000:4000"
+
+  frontend:
+    image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_REPO:-keshavnsut/smart-dashboard}:frontend-latest
+    restart: unless-stopped
+    depends_on:
+      - backend
+    ports:
+      - "80:80"
+
+volumes:
+  mongo_data:

@@ -1,0 +1,24 @@
+{
+  "name": "smart-leads-dashboard",
+  "version": "1.0.0",
+  "main": "index.js",
+  "scripts": {
+    "dev": "concurrently -n backend,frontend -c blue,green \"npm run dev -w @sld/backend\" \"npm run dev -w @sld/frontend\"",
+    "dev:backend": "npm run dev -w @sld/backend",
+    "dev:frontend": "npm run dev -w @sld/frontend",
+    "build": "npm run build -w @sld/backend && npm run build -w @sld/frontend",
+    "lint": "npm run lint -w @sld/backend && npm run lint -w @sld/frontend",
+    "typecheck": "npm run typecheck -w @sld/backend && npm run typecheck -w @sld/frontend"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
+  "private": true,
+  "workspaces": [
+    "apps/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}
