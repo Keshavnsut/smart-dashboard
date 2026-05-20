@@ -137,6 +137,7 @@ All lead list responses include a `pagination` object:
 - `MONGO_URI`
 - `JWT_SECRET`
 - `JWT_EXPIRES_IN` (e.g. `1d`)
+- `COOKIE_SECURE` (`true` | `false`) (optional; defaults to `true` when `NODE_ENV=production`)
 - `CORS_ORIGIN`
 
 ### Frontend (`apps/frontend/.env`)
@@ -147,7 +148,7 @@ All lead list responses include a `pagination` object:
 
 This repo includes a GitHub Actions workflow (`.github/workflows/ci-deploy.yml`) that builds and pushes Docker images when commits are pushed to `main`.
 
-Required GitHub repository secrets (used by the workflow):
+Required GitHub repository secrets (optional; only needed for pushing images to a registry):
 
 - `DOCKER_REGISTRY` — e.g. `docker.io` or your registry hostname
 - `DOCKER_USERNAME` — registry username
@@ -164,20 +165,21 @@ Optional SSH deploy secrets (to enable the `deploy` job):
 
 Workflow behavior:
 
-- The `build-and-push` job builds `apps/backend` and `apps/frontend` images and pushes tags:
+- The `build-and-push` job (only runs if the registry secrets are set) builds images and pushes tags:
   - `${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:backend-${{ github.sha }}`
+  - `${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:backend-latest`
   - `${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:frontend-${{ github.sha }}`
-- If `SSH_HOST` is set, the `deploy` job SSHes to the server and runs `docker compose pull` + `docker compose up -d` in `DEPLOY_PATH`.
+  - `${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:frontend-latest`
+- If `SSH_HOST` is set, the `deploy` job SSHes to the server, updates the git checkout to `origin/main`, then runs docker compose in `DEPLOY_PATH`.
 
 Quick deploy (manual server steps):
 
 1. On the server, clone or copy the repository where `docker-compose.yml` is present.
-2. Create a production env file (`.env.production`) with the necessary environment variables (Mongo URI, JWT secret, etc.).
-3. Pull images (adjust registry/repo/tag as used in your workflow) and restart:
+2. Create a `.env` file (start from `.env.example`) with the necessary environment variables (Mongo URI, JWT secret, etc.).
+3. Start the stack:
 
 ```bash
-docker compose pull
-docker compose up -d --remove-orphans
+docker compose -f docker-compose.prod.yml up -d --remove-orphans --build
 ```
 
 Security notes:

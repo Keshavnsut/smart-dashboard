@@ -5,10 +5,11 @@ import { env } from '../config/env'
 const ACCESS_TOKEN_COOKIE = 'accessToken'
 
 function getCookieBaseOptions() {
+  const secure = env.COOKIE_SECURE ?? env.NODE_ENV === 'production'
   return {
     httpOnly: true,
     sameSite: 'lax' as const,
-    secure: env.NODE_ENV === 'production',
+    secure,
     path: '/',
   }
 }

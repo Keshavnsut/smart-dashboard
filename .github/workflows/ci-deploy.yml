@@ -6,6 +6,7 @@ on:
 
 jobs:
   build-and-push:
+    if: ${{ secrets.DOCKER_REGISTRY != '' && secrets.DOCKER_USERNAME != '' && secrets.DOCKER_PASSWORD != '' && secrets.DOCKER_REPO != '' }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -45,7 +46,6 @@ jobs:
             ${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:frontend-latest
 
   deploy:
-    needs: build-and-push
     runs-on: ubuntu-latest
     if: ${{ secrets.SSH_HOST != '' }}
     steps:
@@ -59,11 +59,17 @@ jobs:
           script: |
             set -e
             cd ${{ secrets.DEPLOY_PATH || '/var/www/smart-dashboard' }}
+            # Update code
+            if [ -d .git ]; then
+              git fetch origin main
+              git reset --hard origin/main
+            fi
+
             # Prefer prod compose if present
             if [ -f docker-compose.prod.yml ]; then
               docker compose -f docker-compose.prod.yml pull || true
-              docker compose -f docker-compose.prod.yml up -d --remove-orphans
+              docker compose -f docker-compose.prod.yml up -d --remove-orphans --build
             else
               docker compose pull || true
-              docker compose up -d --remove-orphans
+              docker compose up -d --remove-orphans --build
             fi

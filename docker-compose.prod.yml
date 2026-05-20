@@ -7,6 +7,9 @@ services:
 
   backend:
     image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_REPO:-keshavnsut/smart-dashboard}:backend-latest
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
     restart: unless-stopped
     depends_on:
       - mongo
@@ -16,6 +19,7 @@ services:
       MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/smart_leads_dashboard}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN:-1d}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
       CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost}
     # Optional: expose backend directly (not required when frontend proxies /api)
     # ports:
@@ -23,6 +27,9 @@ services:
 
   frontend:
     image: ${DOCKER_REGISTRY:-docker.io}/${DOCKER_REPO:-keshavnsut/smart-dashboard}:frontend-latest
+    build:
+      context: .
+      dockerfile: apps/frontend/Dockerfile
     restart: unless-stopped
     depends_on:
       - backend
