@@ -2,6 +2,17 @@
 
 A production-ready full-stack leads dashboard built with the **MERN stack + TypeScript**.
 
+## 🚀 Live Demo
+
+- **Frontend Application:** https://smart-dashboard-2-bcr1.onrender.com
+- **Backend API Health Check:** https://smart-dashboard-1-wez9.onrender.com/health
+
+> Note: Render free-tier services may cold-start after inactivity, so the first request can take 30-60 seconds.
+
+## API Reference
+
+See [`API.md`](./API.md) for full endpoint documentation.
+
 ## Features
 
 - JWT authentication (stored in an **httpOnly cookie**)
