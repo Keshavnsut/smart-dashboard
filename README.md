@@ -144,44 +144,98 @@ All lead list responses include a `pagination` object:
 
 - `VITE_API_BASE_URL` (optional; defaults to `/api`)
 
-## Deployment / CI
+## Deployment
 
-This repo includes a GitHub Actions workflow (`.github/workflows/ci-deploy.yml`) that builds and pushes Docker images when commits are pushed to `main`.
+### Render (recommended)
 
-Required GitHub repository secrets (optional; only needed for pushing images to a registry):
+This repo is configured for Render Docker web services using `render.yaml`.
 
-- `DOCKER_REGISTRY` — e.g. `docker.io` or your registry hostname
-- `DOCKER_USERNAME` — registry username
-- `DOCKER_PASSWORD` — registry password or token
-- `DOCKER_REPO` — repository path (e.g. `myorg/smart-leads`)
+#### Option A: Blueprint deploy (fastest)
 
-Optional SSH deploy secrets (to enable the `deploy` job):
+1. Push `main` with latest `render.yaml`.
+2. In Render, create a Blueprint from the repo.
+3. Set backend secret env vars when prompted:
+   - `MONGO_URI`
+   - `JWT_SECRET`
 
-- `SSH_HOST` — target server IP/hostname
-- `SSH_USER` — username for SSH
-- `SSH_PRIVATE_KEY` — private key (PEM) for SSH
-- `SSH_PORT` — SSH port (defaults to `22`)
-- `DEPLOY_PATH` — path on server where the `docker-compose.yml` lives (defaults to `/var/www/smart-dashboard`)
+`render.yaml` already defines:
+- backend service (`smart-dashboard-backend`) with `initialDeployHook: node dist/scripts/seed.js`
+- frontend service (`smart-dashboard-frontend`) with `API_HOSTPORT=smart-dashboard-backend:4000`
 
-Workflow behavior:
+#### Option B: Create services manually
 
-- The `build-and-push` job (only runs if the registry secrets are set) builds images and pushes tags:
-  - `${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:backend-${{ github.sha }}`
-  - `${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:backend-latest`
-  - `${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:frontend-${{ github.sha }}`
-  - `${{ secrets.DOCKER_REGISTRY }}/${{ secrets.DOCKER_REPO }}:frontend-latest`
-- If `SSH_HOST` is set, the `deploy` job SSHes to the server, updates the git checkout to `origin/main`, then runs docker compose in `DEPLOY_PATH`.
+Backend web service (Docker):
+- Dockerfile path: `apps/backend/Dockerfile`
+- Docker context: `.`
+- Env vars:
+  - `NODE_ENV=production`
+  - `PORT=4000`
+  - `MONGO_URI=<your atlas uri>`
+  - `JWT_SECRET=<32+ char secret>`
+  - `COOKIE_SECURE=true`
 
-Quick deploy (manual server steps):
+Frontend web service (Docker):
+- Dockerfile path: `apps/frontend/Dockerfile`
+- Docker context: `.`
+- Env vars:
+  - `PORT=80`
+  - `API_HOSTPORT=smart-dashboard-backend:4000`
 
-1. On the server, clone or copy the repository where `docker-compose.yml` is present.
-2. Create a `.env` file (start from `.env.example`) with the necessary environment variables (Mongo URI, JWT secret, etc.).
-3. Start the stack:
+Important for frontend proxy:
+- `API_HOSTPORT` must be backend host:port only.
+- Do not include `http://` or `https://` unless intentionally using public URL routing.
+- Do not include trailing `/`.
+
+If using backend public hostname instead of internal service DNS:
+- Use `API_HOSTPORT=<backend-host>.onrender.com:443`.
+
+### Render troubleshooting
+
+- `502 Bad Gateway` from frontend:
+  - Backend may be sleeping on free tier. Wake it by visiting backend URL once.
+  - Confirm `API_HOSTPORT` points to backend, not frontend.
+  - Frontend nginx is configured with `proxy_ssl_server_name on` and longer timeouts for cold starts.
+
+- `508 Loop Detected`:
+  - Frontend is proxying to itself.
+  - Fix `API_HOSTPORT` to backend service host.
+
+- Mongo auth errors on backend:
+  - Verify Atlas username/password.
+  - Percent-encode special characters in password.
+  - Ensure Atlas network access allows Render.
+
+### Seeded admin account (initial deploy)
+
+On first successful backend deploy, seed creates:
+- Email: `admin@example.com`
+- Password: `Password123!`
+
+Change this password after first login.
+
+## CI (GitHub Actions)
+
+This repo includes `.github/workflows/ci-deploy.yml` to build and push Docker images from `main`.
+
+Optional registry secrets:
+- `DOCKER_REGISTRY`
+- `DOCKER_USERNAME`
+- `DOCKER_PASSWORD`
+- `DOCKER_REPO`
+
+Optional SSH deploy secrets:
+- `SSH_HOST`
+- `SSH_USER`
+- `SSH_PRIVATE_KEY`
+- `SSH_PORT` (default `22`)
+- `DEPLOY_PATH` (default `/var/www/smart-dashboard`)
+
+Manual server deploy command:
 
 ```bash
 docker compose -f docker-compose.prod.yml up -d --remove-orphans --build
 ```
 
 Security notes:
-- Do not commit secrets to the repo. Use GitHub Secrets or your cloud provider's secret manager.
-- In production, set `NODE_ENV=production`, provide a strong `JWT_SECRET`, and use a managed MongoDB instance (MongoDB Atlas) with network rules.
+- Do not commit secrets.
+- Use strong `JWT_SECRET` and managed MongoDB with proper network rules.
