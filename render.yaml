@@ -32,7 +32,7 @@ services:
       - key: PORT
         value: "80"
       - key: API_HOSTPORT
-        value: "smart-dashboard-backend:4000"
+        value: "smart-dashboard-1:4000"
     # Using Docker runtime; static publish path and routes are for static sites only
 
 envVarGroups: []
