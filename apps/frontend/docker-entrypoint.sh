@@ -17,6 +17,16 @@ if [ -z "${API_UPSTREAM:-}" ]; then
       https://*) API_UPSTREAM="https://${hostport}" ;;
       *) API_UPSTREAM="http://${hostport}" ;;
     esac
+
+    # Guardrail: avoid accidental self-proxy loop on Render frontend service
+    if [ -n "${RENDER_EXTERNAL_HOSTNAME:-}" ]; then
+      frontend_host=${RENDER_EXTERNAL_HOSTNAME%/}
+      if [ "${hostport}" = "${frontend_host}" ] || [ "${hostport}" = "${frontend_host}:443" ]; then
+        echo "ERROR: API_HOSTPORT points to this frontend host (${hostport})."
+        echo "Set API_HOSTPORT to backend service host (e.g. smart-dashboard-backend:4000)."
+        exit 1
+      fi
+    fi
   else
     API_UPSTREAM="http://backend:4000"
   fi
